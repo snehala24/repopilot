@@ -156,10 +156,13 @@ class LLMGateway:
         for attempt in range(attempts):
             current_prompt = prompt
             if attempt > 0:
+                # Numbering keeps every retry prompt distinct, so each retry
+                # is a fresh provider call instead of a replayed cache entry.
                 current_prompt = (
                     f"{prompt}\n\n"
-                    "Your previous response failed validation with the "
-                    "following error:\n"
+                    f"This is retry attempt {attempt} of "
+                    f"{self.max_structured_retries}. Your previous response "
+                    "failed validation with the following error:\n"
                     f"{last_error}\n"
                     "Respond again with JSON only, matching the required "
                     "schema."
