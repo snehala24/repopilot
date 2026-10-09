@@ -6,18 +6,18 @@
 tiers:
   fast:
     provider: gemini
-    model: <PLACEHOLDER_MODEL_ID>   # TODO: fill in from Google AI Studio (cheap/quick tier)
+    model: gemini-3.5-flash-lite   # TODO: fill in from Google AI Studio (cheap/quick tier)
     temperature: 0.0
     max_output_tokens: 1024
 
   strong:
     provider: gemini
-    model: <PLACEHOLDER_MODEL_ID>   # TODO: fill in from Google AI Studio (highest-quality tier)
+    model: gemini-3.6-flash   # TODO: fill in from Google AI Studio (highest-quality tier)
     temperature: 0.2
     max_output_tokens: 4096
 
   judge:
     provider: gemini
-    model: <PLACEHOLDER_MODEL_ID>   # TODO: fill in from Google AI Studio (evaluation/rubric tier)
+    model: gemini-3.5-flash   # TODO: fill in from Google AI Studio (evaluation/rubric tier)
     temperature: 0.0
     max_output_tokens: 2048
