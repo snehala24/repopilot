@@ -1,0 +1,23 @@
+# LLM tier definitions for RepoPilot.
+#
+# TODO: replace every <PLACEHOLDER_MODEL_ID> with a real model ID from
+# Google AI Studio (https://aistudio.google.com/app/apikey). Model IDs are
+# intentionally NOT hard-coded anywhere in the source.
+tiers:
+  fast:
+    provider: gemini
+    model: <PLACEHOLDER_MODEL_ID>   # TODO: fill in from Google AI Studio (cheap/quick tier)
+    temperature: 0.0
+    max_output_tokens: 1024
+
+  strong:
+    provider: gemini
+    model: <PLACEHOLDER_MODEL_ID>   # TODO: fill in from Google AI Studio (highest-quality tier)
+    temperature: 0.2
+    max_output_tokens: 4096
+
+  judge:
+    provider: gemini
+    model: <PLACEHOLDER_MODEL_ID>   # TODO: fill in from Google AI Studio (evaluation/rubric tier)
+    temperature: 0.0
+    max_output_tokens: 2048
