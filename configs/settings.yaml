@@ -1,0 +1,20 @@
+# RepoPilot application settings (non-secret).
+# Secrets (API keys) live in .env — see .env.example.
+
+app:
+  name: repopilot
+  version: "0.1.0"
+  environment: dev
+  log_level: INFO
+
+paths:
+  # Relative paths resolve against the project root (pathlib, Windows-friendly).
+  data_dir: data
+  cache_dir: .cache
+  llm_cache_dir: .cache/llm
+
+budgets:
+  # Per-run LLM budget guard limits, enforced by repopilot.llm.
+  max_llm_calls: 50
+  max_input_tokens: 200000
+  max_output_tokens: 40000
