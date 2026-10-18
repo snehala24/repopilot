@@ -9,7 +9,7 @@ paths resolve against the project root, so the project is Windows-friendly.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field, SecretStr, field_validator
@@ -93,6 +93,59 @@ class Environment(BaseSettings):
     langfuse_host: str | None = None
 
 
+class IngestionSettings(BaseModel):
+    """Repository ingestion and chunking configuration."""
+
+    chunk_size: int = Field(default=1000, gt=0)
+    chunk_overlap: int = Field(default=200, ge=0)
+    max_file_size_bytes: int = Field(default=1_000_000, gt=0)
+    skip_patterns: list[str] = Field(
+        default_factory=lambda: [
+            ".git",
+            "node_modules",
+            "vendor",
+            "dist",
+            "build",
+            "target",
+            "__pycache__",
+            ".venv",
+            "*.lock",
+            "package-lock.json",
+            "poetry.lock",
+            "Cargo.lock",
+            "yarn.lock",
+            "pnpm-lock.yaml",
+            "*.min.js",
+            "*.min.css",
+            "*.map",
+            "*.pyc",
+        ]
+    )
+
+
+class EmbeddingSettings(BaseModel):
+    """Embedding model configuration."""
+
+    model: str = "BAAI/bge-small-en-v1.5"
+    dimensions: int = Field(default=384, gt=0)
+    batch_size: int = Field(default=64, gt=0)
+
+
+class VectorStoreSettings(BaseModel):
+    """Qdrant vector store configuration."""
+
+    mode: Literal["local", "server"] = "local"
+    path: Path = Path("data/qdrant")
+    url: str = "http://localhost:6333"
+    collection_prefix: str = "repopilot"
+
+    @field_validator("path", mode="before")
+    @classmethod
+    def _resolve_relative(cls, value: Any) -> Any:
+        path = Path(value)
+        return path if path.is_absolute() else PROJECT_ROOT / path
+
+
 class Settings(BaseModel):
     """Fully assembled configuration object."""
 
@@ -100,7 +153,11 @@ class Settings(BaseModel):
     paths: PathsSettings
     budgets: BudgetSettings
     llm: LLMSettings
+    ingestion: IngestionSettings = Field(default_factory=IngestionSettings)
+    embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
+    vector_store: VectorStoreSettings = Field(default_factory=VectorStoreSettings)
     env: Environment
+
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -144,5 +201,9 @@ def load_settings(
         paths=PathsSettings(**app_data.get("paths", {})),
         budgets=BudgetSettings(**app_data.get("budgets", {})),
         llm=LLMSettings(**llm_data),
+        ingestion=IngestionSettings(**app_data.get("ingestion", {})),
+        embedding=EmbeddingSettings(**app_data.get("embedding", {})),
+        vector_store=VectorStoreSettings(**app_data.get("vector_store", {})),
         env=Environment(**env_kwargs),
     )
+
