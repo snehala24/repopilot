@@ -14,10 +14,17 @@ from repopilot.evaluation.metrics import (
     compute_retrieval_metrics,
     compute_source_breakdown,
 )
+from repopilot.evaluation.runner import (
+    EvaluationSummary,
+    QuestionEvalResult,
+    run_retrieval_evaluation,
+)
 
 __all__ = [
+    "EvaluationSummary",
     "GoldenQuestion",
     "QuestionCategory",
+    "QuestionEvalResult",
     "RetrievalMetrics",
     "SourceType",
     "SourceTypeBreakdown",
@@ -25,5 +32,6 @@ __all__ = [
     "compute_retrieval_metrics",
     "compute_source_breakdown",
     "load_golden_dataset",
+    "run_retrieval_evaluation",
     "save_golden_dataset",
 ]
