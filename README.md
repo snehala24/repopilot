@@ -2,10 +2,10 @@
 
 An agentic GitHub developer copilot built on **Advanced RAG + LangGraph + MCP**.
 
-> **Status: Week 1 (Run 1a).** LLM gateway + Week 1 foundations: repository
-> ingestion, character chunking, local embeddings (FastEmbed), and vector store
-> (Qdrant local/server). Advanced retrieval pipelines, evaluation, and LangGraph
-> agent graph come in subsequent runs.
+> **Status: Week 1 (Runs 1a & 1b).** LLM gateway + Week 1 foundations: repository
+> ingestion, character chunking, local embeddings (FastEmbed), Qdrant vector store,
+> and the V1 dense retrieval QA pipeline with CLI tools (`index_repo.py`, `ask_v1.py`).
+> Advanced hybrid retrieval, reranking, evaluation, and LangGraph come in later runs.
 
 ## Project overview
 
@@ -14,7 +14,8 @@ repopilot/
 ├── config.py          # pydantic-settings: .env (secrets) + configs/*.yaml (settings)
 ├── llm/               # Week 0: tiered LLM gateway
 ├── ingestion/         # Week 1: Git clone, file walker, character chunker
-├── retrieval/         # Week 1: FastEmbed/FakeEmbedder, QdrantVectorStore
+├── retrieval/         # Week 1: FastEmbed/FakeEmbedder, QdrantVectorStore, DenseRetriever
+├── pipeline_v1.py     # Week 1: V1 indexing and QA pipeline
 ├── mcp_servers/       # (later) MCP servers
 ├── graph/             # (later) LangGraph agent graph
 ├── evidence/          # (later) evidence pack
@@ -24,10 +25,13 @@ repopilot/
 └── ui/                # (later) user interface
 configs/               # settings.yaml + llm.yaml
 docker-compose.yml     # Qdrant vector database (pinned v1.19.1, 1GB memory limit)
-docs/week1.md          # Week 1 design decisions and config reference
+docs/week1.md          # Week 1 design decisions, benchmarks and config reference
+scripts/index_repo.py  # index a git repo into Qdrant
+scripts/ask_v1.py      # ask grounded questions against an indexed repo
 scripts/smoke_test.py  # live smoke test against the Gemini API
 tests/                 # pytest suite — zero network, fakes + local Qdrant
 ```
+
 
 
 ### LLM gateway (`repopilot/llm/`)
@@ -59,7 +63,10 @@ tests/                 # pytest suite — zero network, fakes + local Qdrant
   `FakeEmbedder` provides deterministic, offline vectors for unit tests.
 - `QdrantVectorStore` wraps Qdrant with idempotent upsert and metadata-filtered search,
   supporting local embedded storage (`data/qdrant`) and server mode (`docker-compose.yml`).
-- See [docs/week1.md](docs/week1.md) for full design decisions and config reference.
+- `DenseRetriever` implements the `Retriever` protocol, embedding queries and mapping Qdrant results to `RetrievedChunk` objects.
+- `pipeline_v1.py` exposes `index_repository()` (idempotent ingestion pipeline) and `answer_question()` (grounded QA with strict context boundary rules and line citations).
+- See [docs/week1.md](docs/week1.md) for full design decisions, benchmarks and config reference.
+
 
 ## Setup (Windows)
 
@@ -109,7 +116,23 @@ No API key and no network needed (all tests use `FakeProvider`):
 python -m pytest
 ```
 
+## Index and query a repository (Windows)
+
+Start Qdrant in Docker (or omit `--server` to use local embedded storage):
+
+```powershell
+# 1. Start Qdrant Docker service
+docker compose up -d
+
+# 2. Index a repository (e.g. pallets/click)
+python scripts\index_repo.py --repo https://github.com/pallets/click --name click --server
+
+# 3. Query the repository (requires real GEMINI_API_KEY in .env)
+python scripts\ask_v1.py --repo click "How does Click define command options?" --server
+```
+
 ## Configuration reference
+
 
 | File                 | Purpose                                              |
 | -------------------- | ---------------------------------------------------- |
