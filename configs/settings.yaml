@@ -18,3 +18,39 @@ budgets:
   max_llm_calls: 50
   max_input_tokens: 200000
   max_output_tokens: 40000
+
+ingestion:
+  chunk_size: 1000
+  chunk_overlap: 200
+  max_file_size_bytes: 1000000
+  skip_patterns:
+    - ".git"
+    - "node_modules"
+    - "vendor"
+    - "dist"
+    - "build"
+    - "target"
+    - "__pycache__"
+    - ".venv"
+    - "*.lock"
+    - "package-lock.json"
+    - "poetry.lock"
+    - "Cargo.lock"
+    - "yarn.lock"
+    - "pnpm-lock.yaml"
+    - "*.min.js"
+    - "*.min.css"
+    - "*.map"
+    - "*.pyc"
+
+embedding:
+  model: "BAAI/bge-small-en-v1.5"
+  dimensions: 384
+  batch_size: 64
+
+vector_store:
+  mode: "local"
+  path: "data/qdrant"
+  url: "http://localhost:6333"
+  collection_prefix: "repopilot"
+
