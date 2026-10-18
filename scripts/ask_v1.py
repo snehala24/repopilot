@@ -90,8 +90,9 @@ def main() -> None:
             print(f"    Preview: {first_line[:90]}")
 
     print("\n=== Metrics ===")
-    print(f"Latency:     {result.latency_ms} ms")
+    print(f"Latency:     {round(result.latency_ms)} ms")
     print(f"Tokens in:   {result.input_tokens}")
+
     print(f"Tokens out:  {result.output_tokens}")
     print(f"Cache hit:   {result.cache_hit}")
     print("=" * 60)
