@@ -99,10 +99,12 @@ def run_retrieval_evaluation(
     retriever_name: str = "dense",
     retriever: Retriever | None = None,
     store: QdrantVectorStore | None = None,
+    embedder: Embedder | None = None,
     settings: Settings | None = None,
     k: int = 5,
     results_base_dir: Path | None = None,
 ) -> EvaluationSummary:
+
     """Run retrieval evaluation over a golden dataset.
 
     Args:
@@ -146,8 +148,12 @@ def run_retrieval_evaluation(
     if retriever is None:
         if retriever_name == "dense":
             retriever = DenseRetriever.from_settings(
-                settings, collection_name=collection_name, vector_store=store
+                settings,
+                collection_name=collection_name,
+                vector_store=store,
+                embedder=embedder,
             )
+
         else:
             raise ValueError(f"Unsupported retriever: {retriever_name!r}")
 
