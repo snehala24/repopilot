@@ -2,10 +2,11 @@
 
 An agentic GitHub developer copilot built on **Advanced RAG + LangGraph + MCP**.
 
-> **Status: Week 1 (Runs 1a & 1b).** LLM gateway + Week 1 foundations: repository
+> **Status: Week 1 (Runs 1a, 1b & 1c).** LLM gateway + Week 1 foundations: repository
 > ingestion, character chunking, local embeddings (FastEmbed), Qdrant vector store,
-> and the V1 dense retrieval QA pipeline with CLI tools (`index_repo.py`, `ask_v1.py`).
-> Advanced hybrid retrieval, reranking, evaluation, and LangGraph come in later runs.
+> V1 dense retrieval QA pipeline, and offline evaluation harness (Precision@K, Recall@K,
+> MRR, NDCG@K, source-type breakdown, CLI runner, and candidate question drafter).
+> Hybrid retrieval, reranking, and LangGraph agent graph come in subsequent weeks.
 
 ## Project overview
 
@@ -16,18 +17,22 @@ repopilot/
 ├── ingestion/         # Week 1: Git clone, file walker, character chunker
 ├── retrieval/         # Week 1: FastEmbed/FakeEmbedder, QdrantVectorStore, DenseRetriever
 ├── pipeline_v1.py     # Week 1: V1 indexing and QA pipeline
+├── evaluation/        # Week 1: golden dataset schema, metrics, runner
 ├── mcp_servers/       # (later) MCP servers
 ├── graph/             # (later) LangGraph agent graph
 ├── evidence/          # (later) evidence pack
-├── evaluation/        # (later) eval harness
 ├── observability/     # (later) Langfuse tracing
 ├── api/               # (later) service API
 └── ui/                # (later) user interface
 configs/               # settings.yaml + llm.yaml
 docker-compose.yml     # Qdrant vector database (pinned v1.19.1, 1GB memory limit)
 docs/week1.md          # Week 1 design decisions, benchmarks and config reference
+docs/eval.md           # Week 1 evaluation methodology, metrics and baseline table
+eval_samples/          # verified sample golden questions (committed)
 scripts/index_repo.py  # index a git repo into Qdrant
 scripts/ask_v1.py      # ask grounded questions against an indexed repo
+scripts/run_retrieval_eval.py # evaluate retrieval against golden datasets
+scripts/draft_questions.py    # draft candidate evaluation questions
 scripts/smoke_test.py  # live smoke test against the Gemini API
 tests/                 # pytest suite — zero network, fakes + local Qdrant
 ```
@@ -66,6 +71,16 @@ tests/                 # pytest suite — zero network, fakes + local Qdrant
 - `DenseRetriever` implements the `Retriever` protocol, embedding queries and mapping Qdrant results to `RetrievedChunk` objects.
 - `pipeline_v1.py` exposes `index_repository()` (idempotent ingestion pipeline) and `answer_question()` (grounded QA with strict context boundary rules and line citations).
 - See [docs/week1.md](docs/week1.md) for full design decisions, benchmarks and config reference.
+
+### Evaluation harness (`repopilot/evaluation/`)
+
+- `GoldenQuestion`: Pydantic schema for evaluation questions (`id`, `repo`, `repo_commit`, `question`, `category`, `expected_files`, `expected_answer_notes`, `answerable`).
+- Pure Python retrieval metrics: Precision@K (chunks), Recall@K (unique files), MRR (unique files), and NDCG@K (unique files, binary relevance, ideal DCG based on $\min(K, |\text{expected\_files}|)$).
+- Source-type classification: tracks chunk distribution across `code`, `docs`, and `tests`.
+- Commit verification: validates dataset `repo_commit` against collection metadata to prevent evaluation on drifted code.
+- `scripts/run_retrieval_eval.py`: CLI evaluation runner that outputs formatted summary tables and persists `results.json` and `summary.md`.
+- `scripts/draft_questions.py`: bootstraps candidate evaluation questions via stratified chunk sampling and strong LLM generation (candidates are saved with `reviewed: false` and hints-only disclaimer for human curation).
+- See [docs/eval.md](docs/eval.md) for complete metric definitions, guidelines, and V1 baseline tables.
 
 
 ## Setup (Windows)
@@ -130,6 +145,20 @@ python scripts\index_repo.py --repo https://github.com/pallets/click --name clic
 # 3. Query the repository (requires real GEMINI_API_KEY in .env)
 python scripts\ask_v1.py --repo click "How does Click define command options?" --server
 ```
+
+## Run retrieval evaluation (Windows)
+
+Run retrieval evaluation against golden datasets (zero LLM calls, deterministic metrics):
+
+```powershell
+# Evaluate DenseRetriever on Docker Qdrant (server mode)
+python scripts\run_retrieval_eval.py --retriever dense --dataset eval_samples/golden_sample.jsonl --k 5 --server
+
+# Or evaluate against local embedded storage
+python scripts\run_retrieval_eval.py --retriever dense --dataset eval_samples/golden_sample.jsonl --k 5 --local
+```
+
+Detailed metrics (`Precision@K`, `Recall@K`, `MRR`, `NDCG@K`), source-type breakdowns, and the worst-performing queries are written to `results/<timestamp>_dense/summary.md` and `results.json`. See [docs/eval.md](docs/eval.md) for full benchmark documentation.
 
 ## Configuration reference
 
